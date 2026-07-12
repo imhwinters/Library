@@ -1,5 +1,0 @@
-# This directory is a Syncthing folder marker.
-# Do not delete.
-
-folderID: aafho-nbffy
-created: 2026-06-23T14:17:16-07:00
