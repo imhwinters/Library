@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import BookSection from "./components/BookSection";
 import BookPopup from "./components/BookPopup";
+import AddBookPopup from "./components/AddBookPopup";
+
+// The IP address used here is TEMPORARY! REPLACE WHEN CADDY IS UP AND RUNNING!
 
 function App() {
     const [books, setBooks] = useState([]);
     const [selectedBook, setSelectedBook] = useState(null);
+    const [showAddPopup, setShowAddPopup] = useState(false);
 
-    function fetchBooks() {
-        fetch("http://localhost:8000/api/books")
-            .then((res) => res.json())
-            .then((data) => setBooks(data))
-            .catch((err) => console.error(err));
+    async function fetchBooks() {
+        const res = await fetch("http://192.168.86.21:8000/api/books");
+        const data = await res.json();
+        setBooks(data);
     }
 
     useEffect(() => {
@@ -19,7 +22,7 @@ function App() {
 
     async function handleSaveBook(updatedBook) {
         await fetch(
-            `http://localhost:8000/api/books/${updatedBook.id}`,
+            `http://192.168.86.21:8000/api/books/${updatedBook.id}`,
             {
                 method: "PUT",
                 headers: {
@@ -29,8 +32,29 @@ function App() {
             }
         );
 
-        fetchBooks();
+        await fetchBooks();
         setSelectedBook(null);
+    }
+
+    async function handleAddBook(bookData) {
+        const response = await fetch(
+            "http://192.168.86.21:8000/api/scan",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(bookData),
+            }
+        );
+
+        if (!response.ok) {
+            alert("Unable to add book.");
+            return;
+        }
+
+        await fetchBooks();
+        setShowAddPopup(false);
     }
 
     const reading = books.filter(
@@ -48,6 +72,13 @@ function App() {
     return (
         <div className="app">
             <h1>Isaac's Library</h1>
+
+            <button
+                className="add-book-button"
+                onClick={() => setShowAddPopup(true)}
+            >
+                + Add Book
+            </button>
 
             <BookSection
                 title="Currently Reading"
@@ -71,6 +102,12 @@ function App() {
                 book={selectedBook}
                 onClose={() => setSelectedBook(null)}
                 onSave={handleSaveBook}
+            />
+
+            <AddBookPopup
+                isOpen={showAddPopup}
+                onClose={() => setShowAddPopup(false)}
+                onAdd={handleAddBook}
             />
         </div>
     );
